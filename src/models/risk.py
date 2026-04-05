@@ -127,3 +127,120 @@ class WorkEnvironment:
     hazards: List[str] = field(default_factory=list)  # IDs dos perigos
     created_at: datetime = field(default_factory=datetime.now)
     updated_at: datetime = field(default_factory=datetime.now)
+
+
+class ControlType(Enum):
+    """Tipos de medidas de controle"""
+    ELIMINACAO = "Eliminação"
+    SUBSTITUICAO = "Substituição"
+    CONTROLE_ADMINISTRATIVO = "Controle Administrativo"
+    EPI = "EPE (Equipamento de Proteção Individual)"
+    MONITORAMENTO = "Monitoramento/Vigilância"
+
+
+class ControlStatus(Enum):
+    """Status de uma medida de controle"""
+    PLANEJADO = "Planejado"
+    EM_EXECUCAO = "Em Execução"
+    CONCLUIDO = "Concluído"
+    ATRASADO = "Atrasado"
+    CANCELADO = "Cancelado"
+
+
+@dataclass
+class ControlMeasure:
+    """Medida de controle/ação corretiva"""
+    id: str
+    assessment_id: str  # Link para RiskAssessment
+
+    # Descrição
+    description: str
+    control_type: ControlType
+
+    # Planejamento
+    start_date: str  # formato YYYY-MM-DD
+    deadline: str  # formato YYYY-MM-DD
+    responsible: str
+    alternative_responsible: Optional[str] = None
+
+    # Orçamento
+    estimated_cost: float = 0.0
+    actual_cost: float = 0.0
+    supplier: Optional[str] = None
+
+    # Execução
+    status: ControlStatus = ControlStatus.PLANEJADO
+    progress_percent: int = 0  # 0-100
+    completion_date: Optional[str] = None
+    notes: str = ""
+
+    # Efetividade
+    expected_reduction_percent: int = 0  # Redução esperada de severidade (%)
+    actual_reduction_percent: Optional[int] = None
+    verified: bool = False
+    verified_by: Optional[str] = None
+    verified_date: Optional[str] = None
+
+    created_at: datetime = field(default_factory=datetime.now)
+    updated_at: datetime = field(default_factory=datetime.now)
+
+    def is_overdue(self) -> bool:
+        """Verifica se está atrasado"""
+        if self.status in [ControlStatus.CONCLUIDO, ControlStatus.CANCELADO]:
+            return False
+
+        from datetime import datetime as dt
+        try:
+            deadline = dt.strptime(self.deadline, '%Y-%m-%d').date()
+            return deadline < dt.now().date()
+        except:
+            return False
+
+    def get_priority(self) -> str:
+        """Retorna prioridade baseada em data e status"""
+        if self.status == ControlStatus.CONCLUIDO:
+            return "Concluída"
+        if self.is_overdue():
+            return "🔴 Crítica (Atrasada)"
+
+        from datetime import datetime as dt, timedelta
+        try:
+            deadline = dt.strptime(self.deadline, '%Y-%m-%d').date()
+            days_remaining = (deadline - dt.now().date()).days
+
+            if days_remaining < 0:
+                return "🔴 Crítica"
+            elif days_remaining <= 7:
+                return "🟠 Alta"
+            elif days_remaining <= 30:
+                return "🟡 Média"
+            else:
+                return "🟢 Baixa"
+        except:
+            return "⚪ Não definida"
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'assessment_id': self.assessment_id,
+            'description': self.description,
+            'control_type': self.control_type.value,
+            'start_date': self.start_date,
+            'deadline': self.deadline,
+            'responsible': self.responsible,
+            'alternative_responsible': self.alternative_responsible,
+            'estimated_cost': self.estimated_cost,
+            'actual_cost': self.actual_cost,
+            'supplier': self.supplier,
+            'status': self.status.value,
+            'progress_percent': self.progress_percent,
+            'completion_date': self.completion_date,
+            'notes': self.notes,
+            'expected_reduction_percent': self.expected_reduction_percent,
+            'actual_reduction_percent': self.actual_reduction_percent,
+            'verified': self.verified,
+            'verified_by': self.verified_by,
+            'verified_date': self.verified_date,
+            'created_at': self.created_at.isoformat(),
+            'updated_at': self.updated_at.isoformat(),
+        }

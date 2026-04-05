@@ -33,7 +33,18 @@ Sistema desktop para análise, avaliação e documentação de riscos ocupaciona
 - Avaliação de risco residual
 - Atribuição de responsáveis e prazos
 
-### 5. **Geração de Documentos**
+### 5. **Plano de Ações Corretivas**
+- Criação de ações para redução de riscos
+- 5 tipos de controle: Eliminação, Substituição, Administrativo, EPI, Monitoramento
+- Planejamento com datas de início e prazo
+- Acompanhamento de progresso (0-100%)
+- Orçamento estimado e realizado
+- Verificação de efetividade (redução de risco)
+- Priorização automática (crítica/alta/média/baixa)
+- Alertas de ações atrasadas
+- Resumo executivo com métricas
+
+### 6. **Geração de Documentos**
 - **PGR (Programa de Gestão de Riscos)** em DOCX
   - Informações da empresa
   - Escopo da avaliação
@@ -137,7 +148,32 @@ A aplicação abrirá uma janela com interface gráfica.
 - Atribua responsável e prazo
 - Clique em "Salvar"
 
-### 5. **Gerar Documentos**
+### 5. **Planejar Ações Corretivas**
+- Abra a aba "Plano de Ações"
+- Clique em "Adicionar Ação"
+- Preencha:
+  - Risco a controlar (escolha na avaliação)
+  - Descrição da medida de controle
+  - Tipo de controle (Eliminação, Substituição, etc.)
+  - Data início e prazo
+  - Responsável(eis)
+  - Custo estimado e orçamento
+  - Status (Planejado, Em Execução, Concluído, Atrasado)
+  - Progresso (0-100%)
+  - Redução esperada de risco (%)
+  - Verificação e efetividade
+- Sistema calcula automaticamente:
+  - 🔴 **Crítica** se atrasada
+  - 🟠 **Alta** se prazo em ≤ 7 dias
+  - 🟡 **Média** se prazo em 8-30 dias
+  - 🟢 **Baixa** se prazo > 30 dias
+
+**Resumo Executivo** mostra:
+- Total de ações, Concluídas, Em Progresso, Atrasadas
+- Orçamento total e gasto realizado
+- Identificação rápida de ações críticas
+
+### 6. **Gerar Documentos**
 - Abra a aba "Gerar Documentos"
 - Preencha informações da empresa:
   - Razão Social

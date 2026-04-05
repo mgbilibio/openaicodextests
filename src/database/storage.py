@@ -6,7 +6,8 @@ from typing import List, Optional
 from datetime import datetime
 from src.models.risk import (
     WorkEnvironment, Hazard, RiskAssessment, WorkActivity,
-    RiskCategory, RiskSeverity, RiskProbability
+    RiskCategory, RiskSeverity, RiskProbability,
+    ControlMeasure, ControlType, ControlStatus
 )
 
 
@@ -21,11 +22,13 @@ class DataStorage:
         self.hazards_file = self.data_dir / "hazards.json"
         self.assessments_file = self.data_dir / "assessments.json"
         self.activities_file = self.data_dir / "activities.json"
+        self.controls_file = self.data_dir / "control_measures.json"
 
         self.environments = self._load_environments()
         self.hazards = self._load_hazards()
         self.assessments = self._load_assessments()
         self.activities = self._load_activities()
+        self.control_measures = self._load_control_measures()
 
     # ===== Environments =====
 
@@ -305,6 +308,82 @@ class DataStorage:
         with open(self.activities_file, 'w', encoding='utf-8') as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
 
+    # ===== Control Measures =====
+
+    def _load_control_measures(self) -> dict:
+        """Carrega medidas de controle do arquivo"""
+        if self.controls_file.exists():
+            try:
+                with open(self.controls_file, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    return {
+                        k: self._dict_to_control(v)
+                        for k, v in data.items()
+                    }
+            except:
+                return {}
+        return {}
+
+    def _dict_to_control(self, data: dict) -> ControlMeasure:
+        """Converte dicionário para ControlMeasure"""
+        return ControlMeasure(
+            id=data['id'],
+            assessment_id=data['assessment_id'],
+            description=data['description'],
+            control_type=ControlType(data['control_type']),
+            start_date=data['start_date'],
+            deadline=data['deadline'],
+            responsible=data['responsible'],
+            alternative_responsible=data.get('alternative_responsible'),
+            estimated_cost=data.get('estimated_cost', 0.0),
+            actual_cost=data.get('actual_cost', 0.0),
+            supplier=data.get('supplier'),
+            status=ControlStatus(data.get('status', 'Planejado')),
+            progress_percent=data.get('progress_percent', 0),
+            completion_date=data.get('completion_date'),
+            notes=data.get('notes', ''),
+            expected_reduction_percent=data.get('expected_reduction_percent', 0),
+            actual_reduction_percent=data.get('actual_reduction_percent'),
+            verified=data.get('verified', False),
+            verified_by=data.get('verified_by'),
+            verified_date=data.get('verified_date'),
+            created_at=datetime.fromisoformat(data.get('created_at', datetime.now().isoformat())),
+            updated_at=datetime.fromisoformat(data.get('updated_at', datetime.now().isoformat()))
+        )
+
+    def save_control_measure(self, control: ControlMeasure):
+        """Salva medida de controle"""
+        control.updated_at = datetime.now()
+        self.control_measures[control.id] = control
+        self._save_control_measures()
+
+    def get_control_measure(self, control_id: str) -> Optional[ControlMeasure]:
+        """Obtém medida de controle por ID"""
+        return self.control_measures.get(control_id)
+
+    def get_controls_by_assessment(self, assessment_id: str) -> List[ControlMeasure]:
+        """Retorna todas as medidas de controle de uma avaliação"""
+        return [c for c in self.control_measures.values() if c.assessment_id == assessment_id]
+
+    def get_all_control_measures(self) -> List[ControlMeasure]:
+        """Retorna todas as medidas de controle"""
+        return list(self.control_measures.values())
+
+    def delete_control_measure(self, control_id: str):
+        """Deleta medida de controle"""
+        if control_id in self.control_measures:
+            del self.control_measures[control_id]
+            self._save_control_measures()
+
+    def _save_control_measures(self):
+        """Salva medidas de controle no arquivo"""
+        data = {}
+        for control_id, control in self.control_measures.items():
+            data[control_id] = control.to_dict()
+
+        with open(self.controls_file, 'w', encoding='utf-8') as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+
     # ===== General =====
 
     def save_all(self):
@@ -313,6 +392,7 @@ class DataStorage:
         self._save_hazards()
         self._save_assessments()
         self._save_activities()
+        self._save_control_measures()
 
     def get_statistics(self) -> dict:
         """Retorna estatísticas dos dados"""
