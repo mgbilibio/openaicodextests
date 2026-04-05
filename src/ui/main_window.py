@@ -9,6 +9,7 @@ from PySide6.QtCore import Qt
 
 from src.ui.tabs.environment_tab import EnvironmentTab
 from src.ui.tabs.hazard_tab import HazardTab
+from src.ui.tabs.activity_tab import ActivityTab
 from src.ui.tabs.risk_assessment_tab import RiskAssessmentTab
 from src.ui.tabs.report_tab import ReportTab
 from src.database.storage import DataStorage
@@ -41,6 +42,7 @@ class MainWindow(QMainWindow):
         tabs = QTabWidget()
         tabs.addTab(EnvironmentTab(self.storage), "Ambientes")
         tabs.addTab(HazardTab(self.storage), "Perigos")
+        tabs.addTab(ActivityTab(self.storage), "Atividades")
         tabs.addTab(RiskAssessmentTab(self.storage), "Avaliação de Riscos")
         tabs.addTab(ReportTab(self.storage), "Gerar Documentos")
 

@@ -18,7 +18,14 @@ Sistema desktop para análise, avaliação e documentação de riscos ocupaciona
 - Registro de pessoas expostas
 - Localização específica do perigo
 
-### 3. **Avaliação de Riscos (ISO 31010)**
+### 3. **Gerenciamento de Atividades**
+- Cadastro de atividades/tarefas executadas
+- Associação a ambientes específicos
+- Frequência de execução (Contínua, Intermitente, Ocasional)
+- Vinculação automática a perigos identificados
+- Número de trabalhadores por atividade
+
+### 4. **Avaliação de Riscos (ISO 31010)**
 - Matriz de severidade x probabilidade
 - 5 níveis de severidade: Insignificante, Menor, Moderado, Maior, Catastrófico
 - 5 níveis de probabilidade: Raro, Improvável, Possível, Provável, Muito Provável
@@ -26,7 +33,7 @@ Sistema desktop para análise, avaliação e documentação de riscos ocupaciona
 - Avaliação de risco residual
 - Atribuição de responsáveis e prazos
 
-### 4. **Geração de Documentos**
+### 5. **Geração de Documentos**
 - **PGR (Programa de Gestão de Riscos)** em DOCX
   - Informações da empresa
   - Escopo da avaliação
@@ -40,7 +47,7 @@ Sistema desktop para análise, avaliação e documentação de riscos ocupaciona
   - Distribuição por nível de risco
   - Formatação profissional
 
-### 5. **Persistência de Dados**
+### 6. **Persistência de Dados**
 - Armazenamento em JSON no diretório do usuário
 - Salvamento automático
 - Recuperação de dados entre sessões
@@ -105,7 +112,19 @@ A aplicação abrirá uma janela com interface gráfica.
   - Descrição de quem está exposto
 - Clique em "Salvar"
 
-### 3. **Avaliar Riscos**
+### 3. **Gerenciar Atividades**
+- Abra a aba "Atividades"
+- Clique em "Adicionar Atividade"
+- Preencha:
+  - Nome da atividade
+  - Descrição detalhada
+  - Ambiente onde é executada
+  - Frequência (Contínua, Intermitente, Ocasional)
+  - Número de trabalhadores envolvidos
+  - Selecione perigos associados (checklist)
+- Clique em "Salvar"
+
+### 4. **Avaliar Riscos**
 - Abra a aba "Avaliação de Riscos"
 - Clique em "Adicionar Avaliação"
 - Selecione o perigo a avaliar
@@ -118,7 +137,7 @@ A aplicação abrirá uma janela com interface gráfica.
 - Atribua responsável e prazo
 - Clique em "Salvar"
 
-### 4. **Gerar Documentos**
+### 5. **Gerar Documentos**
 - Abra a aba "Gerar Documentos"
 - Preencha informações da empresa:
   - Razão Social
@@ -217,6 +236,32 @@ Para dúvidas sobre:
 ## 📝 Licença
 
 Este projeto é fornecido como ferramenta de suporte para Profissionais de Segurança do Trabalho (PPRA/PGR).
+
+## 🚧 Roadmap - Próximas Funcionalidades
+
+### Fase 2 - Análise Avançada
+- [ ] **Análise Postural (NR-17)**: Avaliação ergonômica específica com RULA/RAPID
+- [ ] **Plano de Controles**: Módulo dedicado para planejamento e acompanhamento de ações
+- [ ] **Histórico de Auditoria**: Rastreamento de alterações e responsáveis
+- [ ] **Dashboards**: Visualização de métricas e tendências de riscos
+
+### Fase 3 - Gerenciamento de Recursos
+- [ ] **Ferramentas e EPIs**: Cadastro de equipamentos e associação a riscos
+- [ ] **Matriz de Recursos**: Requisitos de EPIs por atividade
+- [ ] **Registro de Treinamentos**: Rastreamento de capacitação de trabalhadores
+- [ ] **Check-lists**: Criação de roteiros de inspeção e verificação
+
+### Fase 4 - Conformidade e Relatórios
+- [ ] **Gerador de PPRA**: Documento integrado com dados de risco
+- [ ] **Relatório CEREST**: Exportação para formato de notificação
+- [ ] **Comparação com Legislação**: Validação automática contra NRs
+- [ ] **Exportação Excel**: Tabelas dinâmicas para análise
+
+### Fase 5 - Integração e Mobilidade
+- [ ] **Aplicativo Mobile**: Coleta de dados em campo
+- [ ] **Sincronização Cloud**: Backup e acesso remoto
+- [ ] **Integração com Banco de Dados**: PostgreSQL/MySQL
+- [ ] **API REST**: Para integração com outros sistemas
 
 ---
 
