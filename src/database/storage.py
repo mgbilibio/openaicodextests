@@ -13,6 +13,9 @@ from src.models.equipment import (
     EPI, Tool, EPIAssignment,
     EPICategory, ToolCategory, InspectionStatus
 )
+from src.models.ergonomics import (
+    PosturalAssessment, ForceLevel, RiskLevel
+)
 
 
 class DataStorage:
@@ -30,6 +33,7 @@ class DataStorage:
         self.epis_file = self.data_dir / "epis.json"
         self.tools_file = self.data_dir / "tools.json"
         self.epi_assignments_file = self.data_dir / "epi_assignments.json"
+        self.postural_assessments_file = self.data_dir / "postural_assessments.json"
 
         self.environments = self._load_environments()
         self.hazards = self._load_hazards()
@@ -39,6 +43,7 @@ class DataStorage:
         self.epis = self._load_epis()
         self.tools = self._load_tools()
         self.epi_assignments = self._load_epi_assignments()
+        self.postural_assessments = self._load_postural_assessments()
 
     # ===== Environments =====
 
@@ -588,6 +593,104 @@ class DataStorage:
 
     # ===== General =====
 
+    # ===== Postural Assessments =====
+
+    def _load_postural_assessments(self) -> dict:
+        """Carrega avaliações posturais do arquivo"""
+        if self.postural_assessments_file.exists():
+            try:
+                with open(self.postural_assessments_file, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    return {k: self._dict_to_postural(v) for k, v in data.items()}
+            except:
+                return {}
+        return {}
+
+    def _dict_to_postural(self, data: dict) -> PosturalAssessment:
+        """Converte dicionário para PosturalAssessment"""
+        assess = PosturalAssessment(
+            id=data['id'],
+            activity_id=data['activity_id'],
+            assessment_date=data['assessment_date'],
+            assessor=data['assessor'],
+            reviewed_by=data.get('reviewed_by'),
+            reviewed_date=data.get('reviewed_date'),
+            shoulder_elevation=data.get('shoulder_elevation', 'Neutro'),
+            shoulder_abduction=data.get('shoulder_abduction', False),
+            elbow_flexion=data.get('elbow_flexion', 90),
+            elbow_away_from_body=data.get('elbow_away_from_body', False),
+            wrist_extension=data.get('wrist_extension', 0),
+            wrist_deviation=data.get('wrist_deviation', 'Nenhuma'),
+            wrist_rotation=data.get('wrist_rotation', False),
+            neck_flexion=data.get('neck_flexion', 0),
+            neck_rotation=data.get('neck_rotation', False),
+            neck_side_flexion=data.get('neck_side_flexion', False),
+            trunk_flexion=data.get('trunk_flexion', 0),
+            trunk_rotation=data.get('trunk_rotation', False),
+            trunk_side_flexion=data.get('trunk_side_flexion', False),
+            seated_properly=data.get('seated_properly', True),
+            feet_flat_or_footrest=data.get('feet_flat_or_footrest', True),
+            force_level=ForceLevel(data.get('force_level', 'Leve')),
+            force_duration=data.get('force_duration', 'Ocasional'),
+            repetitive_movements=data.get('repetitive_movements', False),
+            static_posture_min=data.get('static_posture_min', 0),
+            activity_frequency=data.get('activity_frequency', 'Ocasional'),
+            high_stress=data.get('high_stress', False),
+            poor_visibility=data.get('poor_visibility', False),
+            inadequate_support=data.get('inadequate_support', False),
+            rula_arm_score=data.get('rula_arm_score', 1),
+            rula_neck_trunk_score=data.get('rula_neck_trunk_score', 1),
+            rula_muscle_activity=data.get('rula_muscle_activity', 0),
+            rula_force_load=data.get('rula_force_load', 0),
+            rula_final_score=data.get('rula_final_score', 1),
+            risk_level=RiskLevel(data.get('risk_level', 'Aceitável')),
+            recommendations=data.get('recommendations', []),
+            interventions_priority=data.get('interventions_priority', 'Nenhuma'),
+            suggested_breaks=data.get('suggested_breaks'),
+            suggested_positions=data.get('suggested_positions', []),
+            required_equipment=data.get('required_equipment', []),
+            follow_up_needed=data.get('follow_up_needed', False),
+            follow_up_date=data.get('follow_up_date'),
+            implemented_changes=data.get('implemented_changes', ''),
+            effectiveness_notes=data.get('effectiveness_notes', ''),
+            created_at=datetime.fromisoformat(data.get('created_at', datetime.now().isoformat())),
+            updated_at=datetime.fromisoformat(data.get('updated_at', datetime.now().isoformat()))
+        )
+        return assess
+
+    def save_postural_assessment(self, assessment: PosturalAssessment):
+        """Salva avaliação postural"""
+        assessment.updated_at = datetime.now()
+        self.postural_assessments[assessment.id] = assessment
+        self._save_postural_assessments()
+
+    def get_postural_assessment(self, assessment_id: str) -> Optional[PosturalAssessment]:
+        """Obtém avaliação postural por ID"""
+        return self.postural_assessments.get(assessment_id)
+
+    def get_postural_by_activity(self, activity_id: str) -> List[PosturalAssessment]:
+        """Retorna avaliações posturais de uma atividade"""
+        return [a for a in self.postural_assessments.values() if a.activity_id == activity_id]
+
+    def get_all_postural_assessments(self) -> List[PosturalAssessment]:
+        """Retorna todas as avaliações posturais"""
+        return list(self.postural_assessments.values())
+
+    def delete_postural_assessment(self, assessment_id: str):
+        """Deleta avaliação postural"""
+        if assessment_id in self.postural_assessments:
+            del self.postural_assessments[assessment_id]
+            self._save_postural_assessments()
+
+    def _save_postural_assessments(self):
+        """Salva avaliações posturais no arquivo"""
+        data = {}
+        for assess_id, assess in self.postural_assessments.items():
+            data[assess_id] = assess.to_dict()
+
+        with open(self.postural_assessments_file, 'w', encoding='utf-8') as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+
     def save_all(self):
         """Salva todos os dados"""
         self._save_environments()
@@ -598,6 +701,7 @@ class DataStorage:
         self._save_epis()
         self._save_tools()
         self._save_epi_assignments()
+        self._save_postural_assessments()
 
     def get_statistics(self) -> dict:
         """Retorna estatísticas dos dados"""
