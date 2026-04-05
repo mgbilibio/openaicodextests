@@ -9,6 +9,10 @@ from src.models.risk import (
     RiskCategory, RiskSeverity, RiskProbability,
     ControlMeasure, ControlType, ControlStatus
 )
+from src.models.equipment import (
+    EPI, Tool, EPIAssignment,
+    EPICategory, ToolCategory, InspectionStatus
+)
 
 
 class DataStorage:
@@ -23,12 +27,18 @@ class DataStorage:
         self.assessments_file = self.data_dir / "assessments.json"
         self.activities_file = self.data_dir / "activities.json"
         self.controls_file = self.data_dir / "control_measures.json"
+        self.epis_file = self.data_dir / "epis.json"
+        self.tools_file = self.data_dir / "tools.json"
+        self.epi_assignments_file = self.data_dir / "epi_assignments.json"
 
         self.environments = self._load_environments()
         self.hazards = self._load_hazards()
         self.assessments = self._load_assessments()
         self.activities = self._load_activities()
         self.control_measures = self._load_control_measures()
+        self.epis = self._load_epis()
+        self.tools = self._load_tools()
+        self.epi_assignments = self._load_epi_assignments()
 
     # ===== Environments =====
 
@@ -386,6 +396,198 @@ class DataStorage:
 
     # ===== General =====
 
+    # ===== EPIs =====
+
+    def _load_epis(self) -> dict:
+        """Carrega EPIs do arquivo"""
+        if self.epis_file.exists():
+            try:
+                with open(self.epis_file, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    return {k: self._dict_to_epi(v) for k, v in data.items()}
+            except:
+                return {}
+        return {}
+
+    def _dict_to_epi(self, data: dict) -> EPI:
+        """Converte dicionário para EPI"""
+        return EPI(
+            id=data['id'],
+            name=data['name'],
+            category=EPICategory(data['category']),
+            description=data['description'],
+            ca_number=data['ca_number'],
+            ca_validity_date=data['ca_validity_date'],
+            manufacturer=data['manufacturer'],
+            attenuation_db=data.get('attenuation_db'),
+            protection_level=data.get('protection_level', 'Médio'),
+            color=data.get('color'),
+            size_range=data.get('size_range'),
+            cost_unit=data.get('cost_unit', 0.0),
+            quantity_in_stock=data.get('quantity_in_stock', 0),
+            reorder_point=data.get('reorder_point', 10),
+            supplier=data.get('supplier', ''),
+            supplier_contact=data.get('supplier_contact'),
+            image_path=data.get('image_path'),
+            notes=data.get('notes', ''),
+            active=data.get('active', True),
+            created_at=datetime.fromisoformat(data.get('created_at', datetime.now().isoformat())),
+            updated_at=datetime.fromisoformat(data.get('updated_at', datetime.now().isoformat()))
+        )
+
+    def save_epi(self, epi: EPI):
+        """Salva EPI"""
+        epi.updated_at = datetime.now()
+        self.epis[epi.id] = epi
+        self._save_epis()
+
+    def get_epi(self, epi_id: str) -> Optional[EPI]:
+        """Obtém EPI por ID"""
+        return self.epis.get(epi_id)
+
+    def get_all_epis(self) -> List[EPI]:
+        """Retorna todos os EPIs"""
+        return list(self.epis.values())
+
+    def delete_epi(self, epi_id: str):
+        """Deleta EPI"""
+        if epi_id in self.epis:
+            del self.epis[epi_id]
+            self._save_epis()
+
+    def _save_epis(self):
+        """Salva EPIs no arquivo"""
+        data = {}
+        for epi_id, epi in self.epis.items():
+            data[epi_id] = epi.to_dict()
+        with open(self.epis_file, 'w', encoding='utf-8') as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+
+    # ===== Tools =====
+
+    def _load_tools(self) -> dict:
+        """Carrega ferramentas do arquivo"""
+        if self.tools_file.exists():
+            try:
+                with open(self.tools_file, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    return {k: self._dict_to_tool(v) for k, v in data.items()}
+            except:
+                return {}
+        return {}
+
+    def _dict_to_tool(self, data: dict) -> Tool:
+        """Converte dicionário para Tool"""
+        return Tool(
+            id=data['id'],
+            name=data['name'],
+            category=ToolCategory(data['category']),
+            description=data['description'],
+            location=data['location'],
+            responsible=data['responsible'],
+            last_inspection_date=data['last_inspection_date'],
+            next_inspection_date=data['next_inspection_date'],
+            inspection_status=InspectionStatus(data.get('inspection_status', 'OK')),
+            inspector=data.get('inspector'),
+            maintenance_interval_days=data.get('maintenance_interval_days', 365),
+            maintenance_notes=data.get('maintenance_notes', ''),
+            serial_number=data.get('serial_number'),
+            image_path=data.get('image_path'),
+            notes=data.get('notes', ''),
+            active=data.get('active', True),
+            created_at=datetime.fromisoformat(data.get('created_at', datetime.now().isoformat())),
+            updated_at=datetime.fromisoformat(data.get('updated_at', datetime.now().isoformat()))
+        )
+
+    def save_tool(self, tool: Tool):
+        """Salva ferramenta"""
+        tool.updated_at = datetime.now()
+        self.tools[tool.id] = tool
+        self._save_tools()
+
+    def get_tool(self, tool_id: str) -> Optional[Tool]:
+        """Obtém ferramenta por ID"""
+        return self.tools.get(tool_id)
+
+    def get_all_tools(self) -> List[Tool]:
+        """Retorna todas as ferramentas"""
+        return list(self.tools.values())
+
+    def delete_tool(self, tool_id: str):
+        """Deleta ferramenta"""
+        if tool_id in self.tools:
+            del self.tools[tool_id]
+            self._save_tools()
+
+    def _save_tools(self):
+        """Salva ferramentas no arquivo"""
+        data = {}
+        for tool_id, tool in self.tools.items():
+            data[tool_id] = tool.to_dict()
+        with open(self.tools_file, 'w', encoding='utf-8') as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+
+    # ===== EPI Assignments =====
+
+    def _load_epi_assignments(self) -> dict:
+        """Carrega associações EPI-Perigo do arquivo"""
+        if self.epi_assignments_file.exists():
+            try:
+                with open(self.epi_assignments_file, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    return {k: self._dict_to_assignment(v) for k, v in data.items()}
+            except:
+                return {}
+        return {}
+
+    def _dict_to_assignment(self, data: dict) -> EPIAssignment:
+        """Converte dicionário para EPIAssignment"""
+        return EPIAssignment(
+            id=data['id'],
+            hazard_id=data['hazard_id'],
+            epi_id=data['epi_id'],
+            required=data.get('required', True),
+            quantity_per_worker=data.get('quantity_per_worker', 1),
+            replacement_frequency_days=data.get('replacement_frequency_days', 180),
+            observations=data.get('observations', ''),
+            created_at=datetime.fromisoformat(data.get('created_at', datetime.now().isoformat())),
+            updated_at=datetime.fromisoformat(data.get('updated_at', datetime.now().isoformat()))
+        )
+
+    def save_epi_assignment(self, assignment: EPIAssignment):
+        """Salva associação EPI-Perigo"""
+        assignment.updated_at = datetime.now()
+        self.epi_assignments[assignment.id] = assignment
+        self._save_epi_assignments()
+
+    def get_epi_assignment(self, assignment_id: str) -> Optional[EPIAssignment]:
+        """Obtém associação por ID"""
+        return self.epi_assignments.get(assignment_id)
+
+    def get_assignments_by_hazard(self, hazard_id: str) -> List[EPIAssignment]:
+        """Retorna EPIs para um perigo específico"""
+        return [a for a in self.epi_assignments.values() if a.hazard_id == hazard_id]
+
+    def get_all_epi_assignments(self) -> List[EPIAssignment]:
+        """Retorna todas as associações"""
+        return list(self.epi_assignments.values())
+
+    def delete_epi_assignment(self, assignment_id: str):
+        """Deleta associação"""
+        if assignment_id in self.epi_assignments:
+            del self.epi_assignments[assignment_id]
+            self._save_epi_assignments()
+
+    def _save_epi_assignments(self):
+        """Salva associações no arquivo"""
+        data = {}
+        for assign_id, assign in self.epi_assignments.items():
+            data[assign_id] = assign.to_dict()
+        with open(self.epi_assignments_file, 'w', encoding='utf-8') as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+
+    # ===== General =====
+
     def save_all(self):
         """Salva todos os dados"""
         self._save_environments()
@@ -393,6 +595,9 @@ class DataStorage:
         self._save_assessments()
         self._save_activities()
         self._save_control_measures()
+        self._save_epis()
+        self._save_tools()
+        self._save_epi_assignments()
 
     def get_statistics(self) -> dict:
         """Retorna estatísticas dos dados"""
