@@ -13,18 +13,33 @@ This file provides guidance for AI assistants (Claude Code and similar tools) wo
 
 ```
 openaicodextests/
-├── CLAUDE.md               # This file
-├── requirements.txt        # Python dependencies
-├── main.py                 # Application entry point
-└── data/                   # Runtime subfolder (auto-created next to main.py)
-    ├── config/             # Saved dock/panel layouts and app settings (JSON)
-    ├── db/                 # SQLite or other local databases
-    ├── tmp/                # Temporary / working files
-    └── results/            # Output and export files
+├── CLAUDE.md                   # AI assistant guidance (this file)
+├── requirements.txt            # Python dependencies
+├── main.py                     # Application entry point (thin launcher only)
+├── docs/
+│   ├── codeinstructions.html   # Developer/AI documentation (always kept current)
+│   ├── usersmanual.html        # End-user operation manual (always kept current)
+│   └── versions.html           # Full change history with user requests + explanations
+├── app/                        # All application source code
+│   ├── __init__.py
+│   ├── core/                   # Business logic, data access, utilities
+│   │   └── paths.py            # BASE_DIR, DATA_DIR, and subfolder constants
+│   ├── ui/                     # PySide6 panels and main window
+│   │   ├── main_window.py      # QMainWindow, dock setup, layout save/restore
+│   │   └── panels/             # One file per QDockWidget panel
+│   └── manager.py              # Top-level coordinator / app entry point logic
+└── data/                       # Runtime subfolder (auto-created, git-ignored)
+    ├── config/                 # Saved dock/panel layouts and app settings (JSON)
+    ├── db/                     # SQLite or other local databases
+    ├── tmp/                    # Temporary / working files
+    └── results/                # Output and export files
 ```
 
+> **Root is kept lean.** Only `main.py`, `requirements.txt`, and `CLAUDE.md` live
+> at the root. Everything else goes inside `app/`, `docs/`, or `data/`.
+>
 > All accessory files (config, databases, temp, results) live inside `data/`
-> adjacent to the main script. The app creates this structure on first run.
+> adjacent to `main.py`. The app creates this structure on first run.
 
 ## Development Workflow
 
@@ -65,9 +80,32 @@ ruff format .       # formatting (PEP 8)
   rewriting whole files. Only use Write when creating a brand-new file.
 - **Minimal changes.** Only change what the task requires — no extra refactors,
   no speculative abstractions, no added error handling for impossible cases.
-- **No unnecessary files.** Don't create READMEs, helpers, or docs unless asked.
 - **Security first.** No command injection, SQL injection, XSS, or other
   OWASP Top-10 vulnerabilities.
+
+### File Size Limit — 150 lines per file (hard rule)
+
+- **No source file may exceed 150 lines.** If a file would exceed this limit,
+  stop, explain why more lines are needed, and ask before proceeding.
+- When a module grows beyond 150 lines, split it into a package folder with a
+  `manager.py` (or equivalent coordinator) that imports and exposes the parts.
+- Example split: `panels/toolbar.py` → `panels/toolbar/manager.py` +
+  `panels/toolbar/actions.py` + `panels/toolbar/style.py`.
+
+### Documentation Files (mandatory — always update after changes)
+
+Three HTML files in `docs/` must be created and kept current at all times:
+
+| File | Purpose |
+|------|---------|
+| `docs/codeinstructions.html` | Developer reference: architecture, module map, class/function index, patterns used, extension guide |
+| `docs/usersmanual.html` | End-user guide: how to use every panel and feature, screenshots/descriptions |
+| `docs/versions.html` | Full change log: every user request verbatim + explanation + what changed + date |
+
+- After **every** set of changes, update all three files.
+- `versions.html` must record the user's original request (quoted), the
+  rationale given, the files changed, and the date (ISO 8601).
+- These files are committed alongside the code changes they document.
 
 ### Python Code Style (PEP 8 — mandatory)
 
@@ -140,10 +178,12 @@ Every significant operation must log **START**, **END**, and **ERROR** (when app
 
 #### Style & Colours
 
-- Each panel should have a distinct, friendly accent colour in its title bar
-  to aid visual orientation (use `QDockWidget` stylesheet per instance).
-- Overall theme should be clean, readable, and visually friendly.
-  Prefer soft colours over stark defaults.
+- **Avoid blue as a primary/accent colour.** Use dark greens and dark reds as
+  the main accent palette (e.g., `#2d5a27`, `#7a1c1c`, `#3b7a35`, `#a83232`).
+- Each panel should have a **distinct accent colour** in its title bar to aid
+  visual orientation (stylesheet applied per `QDockWidget` instance).
+- Overall theme: clean, readable, visually friendly — soft/dark tones,
+  never garish. White or light-grey backgrounds for content areas.
 
 ### File / Directory Helpers
 
@@ -192,9 +232,14 @@ for _d in (CONFIG_DIR, DB_DIR, TMP_DIR, RESULTS_DIR):
 ## Key Decisions / ADRs
 
 - **UI framework:** PySide6 (Qt for Python) — dockable, non-modal panels.
+- **Colour palette:** dark greens + dark reds; no blue as primary accent.
+- **File size:** hard 150-line limit per source file; split into packages when needed.
+- **Documentation:** `docs/codeinstructions.html`, `docs/usersmanual.html`,
+  `docs/versions.html` always updated alongside code.
 - **Data locality:** all runtime artefacts under `data/` next to the app entry point.
 - **Logging:** stdout-only with timestamps; no GUI message boxes.
 - **Imports:** always at module root; no try-except import guards.
+- **Root cleanliness:** only `main.py`, `requirements.txt`, `CLAUDE.md` at root.
 
 ## Common Pitfalls
 
@@ -202,3 +247,6 @@ for _d in (CONFIG_DIR, DB_DIR, TMP_DIR, RESULTS_DIR):
 - Saving layout state before all dock widgets are added — always save on `closeEvent`.
 - Using relative paths (`./data/`) instead of `__file__`-based paths — breaks when
   the app is launched from a different working directory.
+- Letting a file grow past 150 lines without splitting — ask first if needed.
+- Forgetting to update `docs/versions.html` after changes — it must record every
+  user request verbatim with date and affected files.
