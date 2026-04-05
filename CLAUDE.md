@@ -6,130 +6,199 @@ This file provides guidance for AI assistants (Claude Code and similar tools) wo
 
 **Name:** openaicodextests  
 **Remote:** mgbilibio/openaicodextests  
-**Status:** Newly initialized — no source files exist yet.  
+**Stack:** Python · PySide6  
 **Purpose:** Testing and experimentation with AI coding tools (OpenAI Codex, Claude Code, etc.).
-
-> When the project grows, update this file to reflect the actual tech stack, structure, and conventions.
 
 ## Repository Structure
 
 ```
 openaicodextests/
-└── CLAUDE.md          # This file
+├── CLAUDE.md               # This file
+├── requirements.txt        # Python dependencies
+├── main.py                 # Application entry point
+└── data/                   # Runtime subfolder (auto-created next to main.py)
+    ├── config/             # Saved dock/panel layouts and app settings (JSON)
+    ├── db/                 # SQLite or other local databases
+    ├── tmp/                # Temporary / working files
+    └── results/            # Output and export files
 ```
 
-As files are added, document the structure here. For example:
-
-```
-openaicodextests/
-├── CLAUDE.md
-├── README.md
-├── src/               # Source code
-├── tests/             # Test files
-├── package.json       # (or requirements.txt, Cargo.toml, etc.)
-└── .env.example       # Environment variable template
-```
+> All accessory files (config, databases, temp, results) live inside `data/`
+> adjacent to the main script. The app creates this structure on first run.
 
 ## Development Workflow
 
 ### Branch Strategy
 
 - **Feature branches:** `claude/<description>` or `feature/<description>`
-- **Default development branch:** `main` (or `master`)
-- Always develop on a dedicated branch; never commit directly to `main`.
+- **Default development branch:** `main`
+- Never commit directly to `main`.
 
 ### Git Conventions
 
-- Write commit messages in the imperative mood: `Add feature X`, `Fix bug Y`, `Update docs`
-- Keep commits focused and atomic — one logical change per commit
+- Imperative mood: `Add feature X`, `Fix bug Y`, `Update docs`
+- One logical change per commit
 - Push with tracking: `git push -u origin <branch-name>`
 
-### Setting Up (once source files exist)
+### Setting Up
 
 ```bash
-# Clone the repo
 git clone https://github.com/mgbilibio/openaicodextests.git
 cd openaicodextests
-
-# Install dependencies (update command once stack is known)
-# npm install          # Node.js
-# pip install -r requirements.txt  # Python
-# cargo build          # Rust
-
-# Copy environment variables
-cp .env.example .env
-```
-
-### Running Tests (update once test framework is chosen)
-
-```bash
-# Examples — replace with actual commands
-npm test              # Node.js / Jest / Vitest
-pytest                # Python
-cargo test            # Rust
+pip install -r requirements.txt
+python main.py
 ```
 
 ### Linting / Formatting
 
 ```bash
-# Examples — replace with actual commands
-npm run lint          # ESLint
-npm run format        # Prettier
-ruff check .          # Python (ruff)
-cargo fmt             # Rust
+ruff check .        # linting
+ruff format .       # formatting (PEP 8)
 ```
 
 ## AI Assistant Guidelines
 
 ### General Principles
 
-- **Read before editing.** Always read a file before modifying it.
-- **Minimal changes.** Only change what is required to complete the task.
-- **No speculative additions.** Don't add features, abstractions, or error handling beyond what is asked.
-- **No unnecessary files.** Don't create documentation, README files, or helpers unless explicitly requested.
-- **Security first.** Never introduce command injection, XSS, SQL injection, or other OWASP top-10 vulnerabilities.
+- **Read before editing.** Always read a file with the Read tool before modifying it.
+- **Edit, never Write.** Use the Edit tool (targeted line replacement) instead of
+  rewriting whole files. Only use Write when creating a brand-new file.
+- **Minimal changes.** Only change what the task requires — no extra refactors,
+  no speculative abstractions, no added error handling for impossible cases.
+- **No unnecessary files.** Don't create READMEs, helpers, or docs unless asked.
+- **Security first.** No command injection, SQL injection, XSS, or other
+  OWASP Top-10 vulnerabilities.
+
+### Python Code Style (PEP 8 — mandatory)
+
+- **Imports:** all at the top of the file, at module root level.
+  No `import` inside functions, classes, or `try/except` blocks.
+- **No bare `try/except` around imports.** Never use try-except to guard imports.
+- **Docstrings:** every module, class, and public function/method must have a
+  complete Google-style or NumPy-style docstring. Never leave them partial.
+- **Inline comments:** add explanatory inline comments for every non-trivial
+  block or logic step so the intent is immediately clear.
+- **Type hints:** include type hints on all function signatures.
+- **Line length:** 99 characters max.
+- **No `messagebox` / dialog popups for logging.** All feedback goes to stdout
+  via timestamped `print()`.
+
+### Logging Convention (stdout only)
+
+Use timestamped prints for all operational feedback — **no** GUI message boxes,
+**no** modal dialogs for errors/info. Pattern:
+
+```python
+from datetime import datetime
+
+def _log(msg: str) -> None:
+    """Print a timestamped log line to stdout."""
+    print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] {msg}")
+
+# Usage
+_log("START  load_data()")
+_log("END    load_data() — 42 rows loaded")
+_log("ERROR  load_data() — FileNotFoundError: data.csv")
+```
+
+Every significant operation must log **START**, **END**, and **ERROR** (when applicable).
+
+### PySide6 UI Conventions
+
+#### Dockable Panels (QDockWidget)
+
+- **Every functional area is a `QDockWidget`** — never a fixed central widget
+  (or if a central widget is needed, it should also be swappable/hidden).
+- All dock widgets must be **freely movable and dockable** on any side
+  (left, right, top, bottom) or floated into the centre of the window.
+- Enable **tabification**: docks dropped onto each other become tabs.
+- Docks are **non-modal** — the user can interact with all panels simultaneously.
+- Every `QDockWidget` must show its own **minimize / maximize / close** buttons
+  via a custom title bar or `DockWidgetFeatures` flags:
+
+  ```python
+  dock.setFeatures(
+      QDockWidget.DockWidgetMovable
+      | QDockWidget.DockWidgetFloatable
+      | QDockWidget.DockWidgetClosable
+  )
+  ```
+
+- The main window must call
+  `setDockOptions(QMainWindow.AllowNestedDocks | QMainWindow.AllowTabbedDocks)`
+  so panels can be tabbed and freely nested.
+- No dock widget may be hard-coded to a specific side at startup;
+  use `addDockWidget` with a sensible default that the user can override.
+
+#### Layout Persistence
+
+- On close, serialize the full dock/panel layout with
+  `QMainWindow.saveState()` and store it in `data/config/layout.json`
+  (or via `QSettings` pointing to that directory).
+- On start, restore the layout with `QMainWindow.restoreState()`.
+- If no saved layout exists, apply a sensible default arrangement.
+
+#### Style & Colours
+
+- Each panel should have a distinct, friendly accent colour in its title bar
+  to aid visual orientation (use `QDockWidget` stylesheet per instance).
+- Overall theme should be clean, readable, and visually friendly.
+  Prefer soft colours over stark defaults.
+
+### File / Directory Helpers
+
+Resolve the `data/` subfolder relative to the script's own location, not the
+current working directory:
+
+```python
+import pathlib
+
+# Base directory: folder that contains main.py (or the running script)
+BASE_DIR = pathlib.Path(__file__).parent
+DATA_DIR = BASE_DIR / "data"
+
+CONFIG_DIR = DATA_DIR / "config"
+DB_DIR     = DATA_DIR / "db"
+TMP_DIR    = DATA_DIR / "tmp"
+RESULTS_DIR = DATA_DIR / "results"
+
+# Create all subdirectories on first run
+for _d in (CONFIG_DIR, DB_DIR, TMP_DIR, RESULTS_DIR):
+    _d.mkdir(parents=True, exist_ok=True)
+```
 
 ### Branching
 
 - Develop on the designated feature branch (check the session instructions).
-- Never push to `main` or `master` without explicit permission.
+- Never push to `main` without explicit permission.
 
 ### Commits
 
-- Commit with clear, descriptive messages.
-- Stage specific files rather than `git add -A` to avoid accidentally including secrets or large binaries.
-- Never commit `.env` files, credentials, or secrets.
+- Stage specific files by name — never `git add -A`.
+- Never commit `.env` files, credentials, secrets, or the `data/` folder
+  (add `data/` to `.gitignore`).
 
 ### Testing
 
-- Run the test suite after making changes (once tests exist).
+- Run the test suite after changes once tests exist.
 - Do not mark a task complete if tests are failing.
-
-### Code Style
-
-Once a language and framework are chosen, document conventions here. For example:
-- TypeScript: strict mode, ESLint + Prettier
-- Python: ruff + black, type hints required
-- Rust: `cargo fmt` + `cargo clippy`
 
 ## Environment Variables
 
-Document required environment variables here once they are known. Example:
-
-| Variable        | Description                  | Required |
-|-----------------|------------------------------|----------|
-| `API_KEY`       | External service API key     | Yes      |
-| `DATABASE_URL`  | Database connection string   | Yes      |
-| `DEBUG`         | Enable debug logging         | No       |
-
-Copy `.env.example` to `.env` and fill in values before running the project.
+| Variable   | Description                | Required |
+|------------|----------------------------|----------|
+| *(none yet — add as the project grows)* | | |
 
 ## Key Decisions / ADRs
 
-Document significant architectural decisions here as the project evolves.
-
-- *(none yet — project is in initial setup)*
+- **UI framework:** PySide6 (Qt for Python) — dockable, non-modal panels.
+- **Data locality:** all runtime artefacts under `data/` next to the app entry point.
+- **Logging:** stdout-only with timestamps; no GUI message boxes.
+- **Imports:** always at module root; no try-except import guards.
 
 ## Common Pitfalls
 
-- *(none yet — add gotchas here as they are discovered)*
+- Forgetting to call `setDockOptions` on the `QMainWindow` — tabs won't work without it.
+- Saving layout state before all dock widgets are added — always save on `closeEvent`.
+- Using relative paths (`./data/`) instead of `__file__`-based paths — breaks when
+  the app is launched from a different working directory.
