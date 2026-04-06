@@ -14,6 +14,7 @@ from src.ui.tabs.risk_assessment_tab import RiskAssessmentTab
 from src.ui.tabs.control_plan_tab import ControlPlanTab
 from src.ui.tabs.equipment_tab import EquipmentTab
 from src.ui.tabs.ergonomic_tab import ErgonomicTab
+from src.ui.tabs.library_tab import LibraryTab
 from src.ui.tabs.report_tab import ReportTab
 from src.database.storage import DataStorage
 
@@ -50,6 +51,7 @@ class MainWindow(QMainWindow):
         tabs.addTab(ControlPlanTab(self.storage), "Plano de Ações")
         tabs.addTab(EquipmentTab(self.storage), "Ferramentas e EPIs")
         tabs.addTab(ErgonomicTab(self.storage), "Análise Postural")
+        tabs.addTab(LibraryTab(self.data_dir), "📚 Biblioteca de Normas")
         tabs.addTab(ReportTab(self.storage), "Gerar Documentos")
 
         layout.addWidget(tabs)
