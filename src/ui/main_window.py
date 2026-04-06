@@ -14,6 +14,7 @@ from src.ui.tabs.risk_assessment_tab import RiskAssessmentTab
 from src.ui.tabs.control_plan_tab import ControlPlanTab
 from src.ui.tabs.equipment_tab import EquipmentTab
 from src.ui.tabs.ergonomic_tab import ErgonomicTab
+from src.ui.tabs.dashboard_tab import DashboardTab
 from src.ui.tabs.library_tab import LibraryTab
 from src.ui.tabs.report_tab import ReportTab
 from src.database.storage import DataStorage
@@ -44,6 +45,7 @@ class MainWindow(QMainWindow):
 
         # Tabs
         tabs = QTabWidget()
+        tabs.addTab(DashboardTab(self.storage), "📊 Dashboard")
         tabs.addTab(EnvironmentTab(self.storage), "Ambientes")
         tabs.addTab(HazardTab(self.storage), "Perigos")
         tabs.addTab(ActivityTab(self.storage), "Atividades")
